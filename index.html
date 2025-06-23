@@ -19,6 +19,7 @@
       font-family: sans-serif;
     }
     canvas {
+      background: black; /* Ensure canvas background stays black */
       border: 3px solid white;
       box-shadow: 0 0 10px white;
     }
@@ -38,6 +39,7 @@
   <canvas id="pdf-canvas"></canvas>
   <div id="slide-number">1</div>
 
+  <!-- PDF.js Library -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 
   <script>
@@ -64,6 +66,10 @@
 
         canvas.width = scaledViewport.width;
         canvas.height = scaledViewport.height;
+
+        // Clear canvas and fill with black
+        ctx.fillStyle = 'black';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
 
         const renderContext = {
           canvasContext: ctx,
