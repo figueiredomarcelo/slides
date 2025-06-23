@@ -19,9 +19,8 @@
       font-family: sans-serif;
     }
     canvas {
-      background: black; /* Ensure canvas background stays black */
-      border: 3px solid white;
-      box-shadow: 0 0 10px white;
+      background: black;
+      display: block;
     }
     #slide-number {
       position: absolute;
@@ -67,7 +66,7 @@
         canvas.width = scaledViewport.width;
         canvas.height = scaledViewport.height;
 
-        // Clear canvas and fill with black
+        // Clear canvas and fill with black to prevent flicker
         ctx.fillStyle = 'black';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
