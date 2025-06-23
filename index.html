@@ -8,19 +8,17 @@
     html, body {
       margin: 0;
       padding: 0;
-      background: black;
-      color: white;
-      overflow: hidden;
+      background-color: black;
       width: 100%;
       height: 100%;
+      overflow: hidden;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-family: sans-serif;
     }
     canvas {
-      background: black;
       display: block;
+      background-color: black;
     }
     #slide-number {
       position: absolute;
@@ -31,6 +29,7 @@
       background: rgba(0,0,0,0.6);
       padding: 6px 12px;
       border-radius: 8px;
+      z-index: 10;
     }
   </style>
 </head>
@@ -38,7 +37,7 @@
   <canvas id="pdf-canvas"></canvas>
   <div id="slide-number">1</div>
 
-  <!-- PDF.js Library -->
+  <!-- PDF.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 
   <script>
@@ -51,28 +50,35 @@
     let currentPage = 1;
     let firstKeyPressed = false;
 
+    function clearCanvasWithBlack() {
+      ctx.save();
+      ctx.setTransform(1, 0, 0, 1, 0, 0); // reset transform
+      ctx.fillStyle = 'black';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.restore();
+    }
+
     function renderPage(pageNum) {
       pdfDoc.getPage(pageNum).then(page => {
-        const viewport = page.getViewport({ scale: 1 });
+        const unscaledViewport = page.getViewport({ scale: 1 });
+
         const screenWidth = window.innerWidth;
         const screenHeight = window.innerHeight;
-
-        const scaleX = screenWidth / viewport.width;
-        const scaleY = screenHeight / viewport.height;
+        const scaleX = screenWidth / unscaledViewport.width;
+        const scaleY = screenHeight / unscaledViewport.height;
         const scale = Math.min(scaleX, scaleY);
 
-        const scaledViewport = page.getViewport({ scale });
+        const viewport = page.getViewport({ scale });
 
-        canvas.width = scaledViewport.width;
-        canvas.height = scaledViewport.height;
+        // Resize canvas and immediately fill with black
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        clearCanvasWithBlack();
 
-        // Clear canvas and fill with black to prevent flicker
-        ctx.fillStyle = 'black';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
+        // Render slide
         const renderContext = {
           canvasContext: ctx,
-          viewport: scaledViewport
+          viewport
         };
         page.render(renderContext);
 
@@ -81,22 +87,18 @@
     }
 
     function changePage(offset) {
-      const nextPage = currentPage + offset;
-      if (nextPage >= 1 && nextPage <= pdfDoc.numPages) {
-        currentPage = nextPage;
+      const next = currentPage + offset;
+      if (next >= 1 && next <= pdfDoc.numPages) {
+        currentPage = next;
         renderPage(currentPage);
       }
     }
 
     function requestFullscreen() {
       const el = document.documentElement;
-      if (el.requestFullscreen) {
-        el.requestFullscreen();
-      } else if (el.webkitRequestFullscreen) {
-        el.webkitRequestFullscreen();
-      } else if (el.msRequestFullscreen) {
-        el.msRequestFullscreen();
-      }
+      if (el.requestFullscreen) el.requestFullscreen();
+      else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+      else if (el.msRequestFullscreen) el.msRequestFullscreen();
     }
 
     pdfjsLib.getDocument(pdfUrl).promise.then(doc => {
@@ -108,7 +110,10 @@
     });
 
     window.addEventListener('resize', () => {
-      if (pdfDoc) renderPage(currentPage);
+      if (pdfDoc) {
+        clearCanvasWithBlack(); // pre-fill while resizing
+        renderPage(currentPage);
+      }
     });
 
     document.addEventListener('keydown', (e) => {
